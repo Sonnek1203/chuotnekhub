@@ -1,0 +1,4 @@
+_G.Title = "chuột hub"  
+_G.Menu = "Dark"
+_G.Logo = "125505263087102" 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TurboLite/Script/refs/heads/main/Lazy.lua"))()
