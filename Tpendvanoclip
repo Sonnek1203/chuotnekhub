@@ -1,39 +1,65 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Camera = workspace.CurrentCamera
-
-local player = Players.LocalPlayer
 local teleportEvent = ReplicatedStorage:WaitForChild("TeleportRequest")
 
 local noclip = false
-local npcLock = false
-local guiVisible = true
+local lockNPC = false
 local npc = workspace:FindFirstChild("TargetNPC")
 
--- Tạo GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "MobileGUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
--- Khung điều khiển
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 180, 0, 220)
-frame.Position = UDim2.new(0, 10, 0.5, -110)
-frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-frame.Visible = guiVisible
-frame.Parent = gui
+-- Tiếp nối GUI của bạn...
+-- (GUI, frame, title đã được bạn tạo trước)
 
 -- Hàm tạo nút
-local function createButton(text, yOffset, callback)
+local function createButton(text, posY, callback)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(1, -20, 0, 40)
-	button.Position = UDim2.new(0, 10, 0, yOffset)
-	button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.SourceSansBold
+	button.Position = UDim2.new(0, 10, 0, posY)
+	button.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.Gotham
 	button.TextSize = 20
+	button.Text = text
+	button.Parent = frame
+	button.MouseButton1Click:Connect(callback)
+end
+
+-- Nút: Teleport to End
+createButton("📍 Teleport to End", 60, function()
+	teleportEvent:FireServer()
+end)
+
+-- Nút: Toggle NoClip
+createButton("🌀 Toggle NoClip", 110, function()
+	noclip = not noclip
+end)
+
+-- Nút: Lock on NPC
+createButton("🎯 Lock on NPC", 160, function()
+	lockNPC = not lockNPC
+	if not lockNPC then
+		local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+		if humanoid then
+			Camera.CameraSubject = humanoid
+		end
+	end
+end)
+
+-- NoClip & NPC Lock hoạt động
+RunService.Stepped:Connect(function()
+	if noclip and player.Character then
+		for _, part in ipairs(player.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+
+	if lockNPC and npc and npc:FindFirstChild("Humanoid") then
+		Camera.CameraSubject = npc.Humanoid
+	end
+end)
 	button.Text = text
 	button.Parent = frame
 	button.MouseButton1Click:Connect(callback)
