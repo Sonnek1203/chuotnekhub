@@ -1,0 +1,44 @@
+-- Đặt trong StarterPlayerScripts
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local noclip = false
+
+-- Tọa độ bạn muốn teleport đến
+local endPosition = Vector3.new(500, 10, 1000)
+
+-- NoClip Toggle
+RunService.Stepped:Connect(function()
+	if noclip and player.Character then
+		for _, part in pairs(player.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- Giao diện nút cho mobile
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(0, 100, 0, 40)
+tpButton.Position = UDim2.new(0, 10, 0.8, 0)
+tpButton.Text = "TP to End"
+tpButton.Parent = screenGui
+
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(0, 100, 0, 40)
+noclipButton.Position = UDim2.new(0, 10, 0.9, 0)
+noclipButton.Text = "Toggle NoClip"
+noclipButton.Parent = screenGui
+
+tpButton.MouseButton1Click:Connect(function()
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(endPosition)
+	end
+end)
+
+noclipButton.MouseButton1Click:Connect(function()
+	noclip = not noclip
+end)
