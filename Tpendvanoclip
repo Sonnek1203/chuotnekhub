@@ -1,38 +1,78 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
 
 local player = Players.LocalPlayer
 local teleportEvent = ReplicatedStorage:WaitForChild("TeleportRequest")
 
 local noclip = false
+local npcLock = false
+local guiVisible = true
+local npc = workspace:FindFirstChild("TargetNPC")
 
--- Nút GUI (bạn có thể sửa lại UI tùy ý)
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+-- Tạo GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "MobileGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
-local tpButton = Instance.new("TextButton")
-tpButton.Size = UDim2.new(0, 120, 0, 40)
-tpButton.Position = UDim2.new(0, 10, 0.8, 0)
-tpButton.Text = "Teleport End"
-tpButton.Parent = screenGui
+-- Khung điều khiển
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 180, 0, 220)
+frame.Position = UDim2.new(0, 10, 0.5, -110)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.Visible = guiVisible
+frame.Parent = gui
 
-local noclipButton = Instance.new("TextButton")
-noclipButton.Size = UDim2.new(0, 120, 0, 40)
-noclipButton.Position = UDim2.new(0, 10, 0.9, 0)
-noclipButton.Text = "Toggle NoClip"
-noclipButton.Parent = screenGui
+-- Hàm tạo nút
+local function createButton(text, yOffset, callback)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(1, -20, 0, 40)
+	button.Position = UDim2.new(0, 10, 0, yOffset)
+	button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.Font = Enum.Font.SourceSansBold
+	button.TextSize = 20
+	button.Text = text
+	button.Parent = frame
+	button.MouseButton1Click:Connect(callback)
+end
 
--- Gửi lệnh cho server
-tpButton.MouseButton1Click:Connect(function()
+-- Tạo các nút chính
+createButton("📍 Teleport to End", 10, function()
 	teleportEvent:FireServer()
 end)
 
--- Noclip Toggle
-noclipButton.MouseButton1Click:Connect(function()
+createButton("🌀 Toggle NoClip", 60, function()
 	noclip = not noclip
 end)
 
--- Noclip thực thi
+createButton("🎯 Lock on NPC", 110, function()
+	npcLock = not npcLock
+	if not npcLock then
+		local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+		if humanoid then Camera.CameraSubject = humanoid end
+	end
+end)
+
+-- Nút Toggle Menu
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 140, 0, 40)
+toggleBtn.Position = UDim2.new(0, 10, 1, -50)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.Text = "🔧 Show/Hide Menu"
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 18
+toggleBtn.Parent = gui
+
+toggleBtn.MouseButton1Click:Connect(function()
+	guiVisible = not guiVisible
+	frame.Visible = guiVisible
+end)
+
+-- Noclip + NPC Lock loop
 RunService.Stepped:Connect(function()
 	if noclip and player.Character then
 		for _, part in ipairs(player.Character:GetDescendants()) do
@@ -40,5 +80,9 @@ RunService.Stepped:Connect(function()
 				part.CanCollide = false
 			end
 		end
+	end
+
+	if npcLock and npc and npc:FindFirstChild("Humanoid") then
+		Camera.CameraSubject = npc.Humanoid
 	end
 end)
