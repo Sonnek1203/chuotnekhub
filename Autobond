@@ -1,15 +1,48 @@
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Tên part hoặc model đại diện cho Bond
-local BOND_NAME = "Bond"
+-- Tên của ProximityPrompt để xác định Bond
+local PROMPT_NAME = "BondPrompt"
+local autoBondEnabled = false
 
-while task.wait(0.5) do
-	for _, bond in pairs(workspace:GetDescendants()) do
-		if bond:IsA("BasePart") and bond.Name == BOND_NAME then
-			hrp.CFrame = bond.CFrame + Vector3.new(0, 2, 0) -- Teleport đến trên Bond
-			task.wait(0.1)
+-- Tạo GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "AutoBondGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Tạo nút bật/tắt
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 160, 0, 50)
+toggleButton.Position = UDim2.new(0, 10, 0.7, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextSize = 20
+toggleButton.Text = "Auto Bond: OFF"
+toggleButton.Parent = gui
+
+-- Hàm bật/tắt chế độ auto bond
+toggleButton.MouseButton1Click:Connect(function()
+	autoBondEnabled = not autoBondEnabled
+	toggleButton.Text = autoBondEnabled and "Auto Bond: ON" or "Auto Bond: OFF"
+	toggleButton.BackgroundColor3 = autoBondEnabled and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
+end)
+
+-- Vòng lặp tự động thu thập Bond
+RunService.RenderStepped:Connect(function()
+	if autoBondEnabled then
+		for _, prompt in ipairs(workspace:GetDescendants()) do
+			if prompt:IsA("ProximityPrompt") and prompt.Name == PROMPT_NAME then
+				if prompt.Enabled and prompt.MaxActivationDistance > 0 then
+					pcall(function()
+						prompt:InputHoldBegin()
+						task.wait(0.1)
+						prompt:InputHoldEnd()
+					end)
+				end
+			end
 		end
 	end
-end
+end)
