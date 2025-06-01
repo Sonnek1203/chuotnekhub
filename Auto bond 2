@@ -22,3 +22,4 @@ end
 
 -- 👉 Gọi hàm này để bắt đầu
 teleportAllBonds()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Sonnek1203/chuotnekhub/refs/heads/main/Auto%20bond"))()
