@@ -1,0 +1,34 @@
+-- Script Auto Swing cho Dead Rails (bản sạch)
+-- Tác giả: Sơn Nek (Viết lại từ đầu - không mã hóa, không rủi ro)
+
+-- Tự động bấm phím đánh (giả lập thao tác đánh liên tục)
+-- Chỉ hoạt động nếu nhân vật đang sống và tồn tại vũ khí
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local uis = game:GetService("UserInputService")
+
+-- Delay giữa các lần đánh (tuỳ chỉnh)
+local SWING_INTERVAL = 0.25 -- 0.25 giây giữa mỗi lần swing
+
+local function autoSwing()
+    while true do
+        -- Kiểm tra xem nhân vật còn sống và có vũ khí không
+        if character and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0 then
+            -- Kích hoạt hành động đánh
+            local swingEvent = player:FindFirstChild("Swing") or character:FindFirstChild("Swing")
+            if swingEvent and swingEvent:IsA("RemoteEvent") then
+                swingEvent:FireServer()
+            else
+                -- Nếu không có remote event, dùng InputService để giả lập phím chuột trái
+                uis.InputBegan:Fire({UserInputType = Enum.UserInputType.MouseButton1})
+                uis.InputEnded:Fire({UserInputType = Enum.UserInputType.MouseButton1})
+            end
+        end
+        wait(SWING_INTERVAL)
+    end
+end
+
+-- Chạy dưới dạng coroutine để không chặn các hành động khác
+task.spawn(autoSwing)
