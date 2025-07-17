@@ -1,0 +1,83 @@
+-- Khởi tạo
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local runService = game:GetService("RunService")
+
+-- Tạo GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "GumanbaUI"
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 260, 0, 200)
+Frame.Position = UDim2.new(0, 20, 0, 80)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Active = true
+Frame.Draggable = true
+
+local toggles = {}
+local function makeToggle(txt, onChanged)
+	local btn = Instance.new("TextButton", Frame)
+	btn.Size = UDim2.new(1, -20, 0, 30)
+	btn.Position = UDim2.new(0, 10, 0, (#toggles)*35 + 10)
+	btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 14
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Text = txt..": OFF"
+	local state = false
+	btn.MouseButton1Click:Connect(function()
+		state = not state
+		btn.Text = txt..": "..(state and "ON" or "OFF")
+		onChanged(state)
+	end)
+	table.insert(toggles, btn)
+end
+
+-- 1. Infinite Stamina
+makeToggle("Infinite Stamina", function(enabled)
+	if enabled then
+		toggles.inf = runService.RenderStepped:Connect(function()
+			if char:FindFirstChild("Stamina") then
+				char.Stamina.Value = char.Stamina.MaxValue
+			end
+		end)
+	else
+		if toggles.inf then toggles.inf:Disconnect() end
+	end
+end)
+
+-- 2. Auto Generated (safe sau 4s)
+makeToggle("Auto Generated", function(enabled)
+	if enabled then
+		toggles.auto = runService.Heartbeat:Connect(function()
+			task.wait(4)
+			-- --------------------------------------------------
+			-- 🔧 Tùy bạn sửa đoạn này theo hành động mong muốn:
+			-- Ví dụ: đẩy một RemoteEvent, xài item, auto farm, ...
+			-- char.Humanoid:TakeDamage(0)
+			-- --------------------------------------------------
+		end)
+	else
+		if toggles.auto then toggles.auto:Disconnect() end
+	end
+end)
+
+-- 3. Speed Hack tùy chỉnh
+local sb = Instance.new("TextBox", Frame)
+sb.Size = UDim2.new(1, -20, 0, 30)
+sb.Position = UDim2.new(0, 10, 0, (#toggles)*35 + 10)
+sb.BackgroundColor3 = Color3.fromRGB(50,50,50)
+sb.TextColor3 = Color3.new(1,1,1)
+sb.PlaceholderText = "Speed (VD: 50)"
+
+makeToggle("Speed Hack", function(enabled)
+	if enabled then
+		toggles.speed = runService.RenderStepped:Connect(function()
+			local val = tonumber(sb.Text)
+			if hum and val and val > 0 then hum.WalkSpeed = val end
+		end)
+	else
+		if toggles.speed then toggles.speed:Disconnect() end
+		hum.WalkSpeed = 16
+	end
+end)
