@@ -1,83 +1,102 @@
--- Khởi tạo
 local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hum = char:WaitForChild("Humanoid")
-local runService = game:GetService("RunService")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 
--- Tạo GUI
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "GumanbaUI"
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 260, 0, 200)
-Frame.Position = UDim2.new(0, 20, 0, 80)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.Active = true
-Frame.Draggable = true
+-- UI Gumanba Style
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 250, 0, 320)
+frame.Position = UDim2.new(0, 10, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
 
-local toggles = {}
-local function makeToggle(txt, onChanged)
-	local btn = Instance.new("TextButton", Frame)
-	btn.Size = UDim2.new(1, -20, 0, 30)
-	btn.Position = UDim2.new(0, 10, 0, (#toggles)*35 + 10)
-	btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-	btn.Font = Enum.Font.Gotham
-	btn.TextSize = 14
+local function createToggle(name, y, callback)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(0, 220, 0, 40)
+	btn.Position = UDim2.new(0, 15, 0, y)
+	btn.Text = "[OFF] " .. name
+	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Text = txt..": OFF"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
 	local state = false
+
 	btn.MouseButton1Click:Connect(function()
 		state = not state
-		btn.Text = txt..": "..(state and "ON" or "OFF")
-		onChanged(state)
+		btn.Text = (state and "[ON] " or "[OFF] ") .. name
+		callback(state)
 	end)
-	table.insert(toggles, btn)
 end
 
--- 1. Infinite Stamina
-makeToggle("Infinite Stamina", function(enabled)
-	if enabled then
-		toggles.inf = runService.RenderStepped:Connect(function()
-			if char:FindFirstChild("Stamina") then
-				char.Stamina.Value = char.Stamina.MaxValue
+-- 🔧 AUTO GENERATOR
+createToggle("Auto Generator", 10, function(state)
+	_G.autoGen = state
+	task.spawn(function()
+		while _G.autoGen do
+			for _, v in pairs(workspace:GetDescendants()) do
+				if v:IsA("ProximityPrompt") and v.Parent and v.Parent.Name:lower():find("generator") then
+					fireproximityprompt(v)
+					wait(4)
+				end
+			end
+			wait(1)
+		end
+	end)
+end)
+
+-- 🏃 INFINITE STAMINA
+createToggle("Infinite Stamina", 60, function(state)
+	_G.infStamina = state
+	task.spawn(function()
+		while _G.infStamina do
+			local stam = player:FindFirstChild("Stamina") or player.Character:FindFirstChild("Stamina")
+			if stam then stam.Value = 100 end
+			wait(0.1)
+		end
+	end)
+end)
+
+-- ⚡ HACK SPEED (với input chỉnh)
+createToggle("Hack Speed", 110, function(state)
+	if state then
+		local input = Instance.new("TextBox", frame)
+		input.Size = UDim2.new(0, 220, 0, 35)
+		input.Position = UDim2.new(0, 15, 0, 160)
+		input.PlaceholderText = "Speed (tối đa 50)"
+		input.Text = ""
+		input.BackgroundColor3 = Color3.fromRGB(50,50,50)
+		input.TextColor3 = Color3.new(1,1,1)
+		input.ClearTextOnFocus = false
+		input.Font = Enum.Font.Gotham
+		input.TextSize = 14
+
+		input.FocusLost:Connect(function()
+			local val = tonumber(input.Text)
+			if val and val > 0 and val <= 50 then
+				humanoid.WalkSpeed = val
+			else
+				humanoid.WalkSpeed = 16
 			end
 		end)
 	else
-		if toggles.inf then toggles.inf:Disconnect() end
+		humanoid.WalkSpeed = 16
 	end
 end)
 
--- 2. Auto Generated (safe sau 4s)
-makeToggle("Auto Generated", function(enabled)
-	if enabled then
-		toggles.auto = runService.Heartbeat:Connect(function()
-			task.wait(4)
-			-- --------------------------------------------------
-			-- 🔧 Tùy bạn sửa đoạn này theo hành động mong muốn:
-			-- Ví dụ: đẩy một RemoteEvent, xài item, auto farm, ...
-			-- char.Humanoid:TakeDamage(0)
-			-- --------------------------------------------------
-		end)
-	else
-		if toggles.auto then toggles.auto:Disconnect() end
-	end
-end)
-
--- 3. Speed Hack tùy chỉnh
-local sb = Instance.new("TextBox", Frame)
-sb.Size = UDim2.new(1, -20, 0, 30)
-sb.Position = UDim2.new(0, 10, 0, (#toggles)*35 + 10)
-sb.BackgroundColor3 = Color3.fromRGB(50,50,50)
-sb.TextColor3 = Color3.new(1,1,1)
-sb.PlaceholderText = "Speed (VD: 50)"
-
-makeToggle("Speed Hack", function(enabled)
-	if enabled then
-		toggles.speed = runService.RenderStepped:Connect(function()
-			local val = tonumber(sb.Text)
-			if hum and val and val > 0 then hum.WalkSpeed = val end
-		end)
-	else
-		if toggles.speed then toggles.speed:Disconnect() end
-		hum.WalkSpeed = 16
-	end
+-- 🎒 AUTO PICK TOOL (Bloxy Cola & Medkit)
+createToggle("Auto Pick Tool", 210, function(state)
+	_G.autoPick = state
+	task.spawn(function()
+		while _G.autoPick do
+			for _, v in pairs(workspace:GetDescendants()) do
+				if v:IsA("Tool") and (v.Name:lower():find("cola") or v.Name:lower():find("med") or v.Name:lower():find("bloxy")) then
+					if (v.Position - character.HumanoidRootPart.Position).Magnitude < 10 then
+						firetouchinterest(v.Handle, character.HumanoidRootPart, 0)
+						firetouchinterest(v.Handle, character.HumanoidRootPart, 1)
+					end
+				end
+			end
+			wait(1)
+		end
+	end)
 end)
