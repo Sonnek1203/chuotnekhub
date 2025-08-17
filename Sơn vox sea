@@ -1,0 +1,198 @@
+-- ⚓ Sơn Vox Sea | GUI Full Combo
+-- Style giống H4x Loader
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TabFrame = Instance.new("Frame")
+local ButtonFrame = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local HRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 500, 0, 300)
+
+TabFrame.Name = "TabFrame"
+TabFrame.Parent = MainFrame
+TabFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TabFrame.BorderSizePixel = 0
+TabFrame.Size = UDim2.new(0, 120, 1, 0)
+
+ButtonFrame.Name = "ButtonFrame"
+ButtonFrame.Parent = MainFrame
+ButtonFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ButtonFrame.BorderSizePixel = 0
+ButtonFrame.Position = UDim2.new(0, 120, 0, 0)
+ButtonFrame.Size = UDim2.new(1, -120, 1, 0)
+
+UIListLayout.Parent = TabFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- function tạo tab
+local CurrentTab = nil
+function CreateTab(name)
+    local TabButton = Instance.new("TextButton")
+    TabButton.Parent = TabFrame
+    TabButton.Size = UDim2.new(1, 0, 0, 30)
+    TabButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    TabButton.Text = name
+    TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+    local Frame = Instance.new("Frame")
+    Frame.Parent = ButtonFrame
+    Frame.BackgroundTransparency = 1
+    Frame.Size = UDim2.new(1, 0, 1, 0)
+    Frame.Visible = false
+
+    TabButton.MouseButton1Click:Connect(function()
+        if CurrentTab then CurrentTab.Visible = false end
+        Frame.Visible = true
+        CurrentTab = Frame
+    end)
+
+    return Frame
+end
+
+-- function tạo button
+function CreateButton(tab, text, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = tab
+    Btn.Size = UDim2.new(0, 300, 0, 30)
+    Btn.Position = UDim2.new(0, 20, 0, #tab:GetChildren() * 35)
+    Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    Btn.MouseButton1Click:Connect(callback)
+end
+
+------------------------------------------------
+-- Các Tab
+------------------------------------------------
+local FarmTab = CreateTab("Auto Farm")
+local TeleportTab = CreateTab("Teleport")
+local ESPTab = CreateTab("ESP")
+local PlayerTab = CreateTab("Player")
+local ShopTab = CreateTab("Shop")
+
+------------------------------------------------
+-- Nút trong Auto Farm
+------------------------------------------------
+CreateButton(FarmTab, "Auto Farm Chest", function()
+    spawn(function()
+        while task.wait(2) do
+            for _, chest in pairs(workspace:GetDescendants()) do
+                if chest:IsA("Model") and chest.Name:lower():find("chest") then
+                    if HRP and chest:FindFirstChild("HumanoidRootPart") then
+                        HRP.CFrame = chest.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+                        firetouchinterest(HRP, chest.HumanoidRootPart, 0)
+                        firetouchinterest(HRP, chest.HumanoidRootPart, 1)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+------------------------------------------------
+-- Teleport
+------------------------------------------------
+CreateButton(TeleportTab, "Teleport to Start Island", function()
+    if HRP then
+        HRP.CFrame = CFrame.new(0, 20, 0) -- chỉnh tọa độ nếu muốn
+    end
+end)
+
+------------------------------------------------
+-- ESP
+------------------------------------------------
+CreateButton(ESPTab, "Toggle Player ESP", function()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            if not plr.Character:FindFirstChild("Highlight") then
+                local hl = Instance.new("Highlight")
+                hl.Parent = plr.Character
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+            else
+                plr.Character.Highlight:Destroy()
+            end
+        end
+    end
+end)
+
+------------------------------------------------
+-- Player
+------------------------------------------------
+CreateButton(PlayerTab, "God Mode", function()
+    if LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.Health = math.huge
+    end
+end)
+
+CreateButton(PlayerTab, "WalkSpeed 100", function()
+    if LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    end
+end)
+
+CreateButton(PlayerTab, "Infinite Jump", function()
+    game:GetService("UserInputService").JumpRequest:Connect(function()
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end)
+end)
+
+------------------------------------------------
+-- Shop
+------------------------------------------------
+CreateButton(ShopTab, "Auto Buy Haki", function()
+    spawn(function()
+        while task.wait(5) do
+            for _, npc in pairs(workspace:GetDescendants()) do
+                if npc:IsA("Model") and npc:FindFirstChildOfClass("ProximityPrompt") then
+                    if npc.Name:lower():find("haki") or npc.Name:lower():find("buso") then
+                        HRP.CFrame = npc:GetModelCFrame() + Vector3.new(0,2,0)
+                        fireproximityprompt(npc:FindFirstChildOfClass("ProximityPrompt"))
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+CreateButton(ShopTab, "Auto Buy Sword", function()
+    spawn(function()
+        while task.wait(5) do
+            for _, npc in pairs(workspace:GetDescendants()) do
+                if npc:IsA("Model") and npc:FindFirstChildOfClass("ProximityPrompt") then
+                    if npc.Name:lower():find("sword") or npc.Name:lower():find("katana") then
+                        HRP.CFrame = npc:GetModelCFrame() + Vector3.new(0,2,0)
+                        fireproximityprompt(npc:FindFirstChildOfClass("ProximityPrompt"))
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+CreateButton(ShopTab, "Auto Buy Fruit", function()
+    spawn(function()
+        while task.wait(5) do
+            for _, npc in pairs(workspace:GetDescendants()) do
+                if npc:IsA("Model") and npc:FindFirstChildOfClass("ProximityPrompt") then
+                    if npc.Name:lower():find("fruit") or npc.Name:lower():find("devil") then
+                        HRP.CFrame = npc:GetModelCFrame() + Vector3.new(0,2,0)
+                        fireproximityprompt(npc:FindFirstChildOfClass("ProximityPrompt"))
+                    end
+                end
+            end
+        end
+    end)
+end)
